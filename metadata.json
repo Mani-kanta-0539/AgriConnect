@@ -1,0 +1,7 @@
+{
+  "name": "AgriConnect",
+  "description": "A comprehensive digital platform for farmers providing crop guidance, market rates, weather updates, and community support.",
+  "requestFramePermissions": [
+    "geolocation"
+  ]
+}

@@ -1,0 +1,84 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // ===============================================================
+    // Assumed Data Model
+    // ===============================================================
+    //
+    // Collection: profiles
+    // Document ID: userId (matches auth.uid)
+    // Fields:
+    //   - name: string (required)
+    //   - email: string (required, email format)
+    //
+    // Collection: iot_data
+    // Document ID: deviceId (e.g., '1')
+    // Fields:
+    //   - temperature: number (required)
+    //   - humidity: number (required)
+    //   - soilMoisture: number (required)
+    //   - nutrients: number (required)
+    //   - motorStatus: boolean (required)
+    //
+    // ===============================================================
+
+    // ===============================================================
+    // Helper Functions
+    // ===============================================================
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    function hasRequiredFields(fields) {
+      return request.resource.data.keys().hasAll(fields);
+    }
+
+    function hasOnlyAllowedFields(fields) {
+      return request.resource.data.keys().hasOnly(fields);
+    }
+
+    function isValidEmail(email) {
+      return email is string && email.matches("^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$");
+    }
+
+    function isValidProfile(data) {
+      return hasOnlyAllowedFields(['name', 'email']) &&
+             data.name is string && data.name.size() > 0 && data.name.size() <= 100 &&
+             isValidEmail(data.email);
+    }
+
+    function isValidIoTData(data) {
+      return hasOnlyAllowedFields(['temperature', 'humidity', 'soilMoisture', 'nutrients', 'motorStatus']) &&
+             data.temperature is number &&
+             data.humidity is number &&
+             data.soilMoisture is number &&
+             data.nutrients is number &&
+             data.motorStatus is bool;
+    }
+
+    // ===============================================================
+    // Rules
+    // ===============================================================
+
+    match /profiles/{userId} {
+      allow read: if isOwner(userId);
+      allow create: if isOwner(userId) && hasRequiredFields(['name', 'email']) && isValidProfile(request.resource.data);
+      allow update: if isOwner(userId) && isValidProfile(request.resource.data);
+      allow delete: if false; // Profiles shouldn't be deleted directly from client
+    }
+
+    match /iot_data/{deviceId} {
+      // For this demo, any authenticated user can read/write IoT data.
+      // In a real app, this should be scoped to the user's farm/devices.
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated() && hasRequiredFields(['temperature', 'humidity', 'soilMoisture', 'nutrients', 'motorStatus']) && isValidIoTData(request.resource.data);
+      allow update: if isAuthenticated() && isValidIoTData(request.resource.data);
+      allow delete: if false;
+    }
+  }
+}

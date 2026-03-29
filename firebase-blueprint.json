@@ -1,0 +1,63 @@
+{
+  "entities": {
+    "Profile": {
+      "title": "Profile",
+      "description": "User profile information",
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Full name of the user"
+        },
+        "email": {
+          "type": "string",
+          "format": "email",
+          "description": "Email address of the user"
+        }
+      },
+      "required": ["name", "email"]
+    },
+    "IoTData": {
+      "title": "IoTData",
+      "description": "Real-time IoT sensor data and controls",
+      "type": "object",
+      "properties": {
+        "temperature": {
+          "type": "number",
+          "description": "Temperature in Celsius"
+        },
+        "humidity": {
+          "type": "number",
+          "description": "Humidity percentage"
+        },
+        "soilMoisture": {
+          "type": "number",
+          "description": "Soil moisture percentage"
+        },
+        "nutrients": {
+          "type": "number",
+          "description": "Nutrient level (EC)"
+        },
+        "motorStatus": {
+          "type": "boolean",
+          "description": "Status of the water pump motor"
+        }
+      },
+      "required": ["temperature", "humidity", "soilMoisture", "nutrients", "motorStatus"]
+    }
+  },
+  "firestore": {
+    "/profiles/{userId}": {
+      "schema": {
+        "$ref": "#/entities/Profile"
+      },
+      "description": "User profiles"
+    },
+    "/iot_data/{deviceId}": {
+      "schema": {
+        "$ref": "#/entities/IoTData"
+      },
+      "description": "IoT device data"
+    }
+  }
+}
